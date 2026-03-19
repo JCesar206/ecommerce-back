@@ -16,7 +16,7 @@ const app = express();
 
 // Middlewares
 app.use(cors({
-  origin: "http://localhost:5173",
+  origin: ["http://localhost:5173", "http://localhost:5174"],
   credentials: true
 }));
 
@@ -26,6 +26,7 @@ app.use(morgan("dev"));
 
 app.use("/api/auth", authRoutes);
 app.use("/api/products", productRoutes);
+app.use("/uploads", express.static("uploads"));
 
 // Test
 app.get("/", (req, res) => {
