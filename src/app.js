@@ -5,12 +5,14 @@ const morgan = require("morgan");
 
 require("dotenv").config();
 
-const { logger } = require("./utils/logger");
-const { testConnection } = require("./config/db");
-const authRoutes = require("./routes/auth.routes");
-const productRoutes = require("./routes/product.routes");
+const { logger } = require("./utils/logger.js");
+const { testConnection } = require("./config/db.js");
+const { initDatabase } = require("./scripts/init.js"); // tu initDatabase
+const seedDB = require("./scripts/seed.js"); // tu seed refactorizado
+const authRoutes = require("./routes/auth.routes.js");
+const productRoutes = require("./routes/product.routes.js");
 
-const errorMiddleware = require("./middlewares/error.middleware");
+const errorMiddleware = require("./middlewares/error.middleware.js");
 
 const app = express();
 
@@ -34,9 +36,23 @@ app.get("/", (req, res) => {
 });
 
 app.use(errorMiddleware);
-testConnection();
 
 const PORT = process.env.PORT || 4000;
-app.listen(PORT, () => {
-  logger.info(`🚀 Servidor corriendo en http://localhost:${PORT}`);
-});
+
+(async () => {
+  try {
+    // Probar conexión
+    await testConnection();
+    // Crear DB y tablas si no existen
+    await initDatabase();
+    // Ejecutar seed idempotente
+    await seedDB();
+    // Arrancar servidor
+    app.listen(PORT, () => {
+      logger.info(`🚀 Servidor corriendo en http://localhost:${PORT}`);
+    });
+  } catch (error) {
+    logger.error("❌ Error al iniciar el servidor:", error);
+    process.exit(1);
+  }
+})();
